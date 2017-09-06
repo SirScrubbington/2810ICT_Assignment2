@@ -1,8 +1,6 @@
 import sqlite3
 from xlrd import open_workbook
 
-
-
 from sqlite3 import Error
 
 def create_db(db_file):
@@ -30,13 +28,14 @@ def insert_row(conn,table,data):
              if(i > 0):
                 sql += ","
              if(isinstance(data[i],str)):
-                 data[i] = data[i].replace("'","’")
-                 sql +="'"+data[i]+"'"
+                 temp = data[i].replace("'","’")
+                 sql +="'"+temp+"'"
              else:
                  sql +=str(data[i])
          sql+=");"
-         #print(sql)
+         print(sql)
          c.execute(sql)
+         conn.commit()
      except Error as e:
          print(sql)
          print(e)
@@ -102,3 +101,4 @@ if __name__ == '__main__':
         read_data(data_gltbmc,"CITY")
         read_data(data_gltbs, "STATE")
         read_data(data_gltbc, "COUNTRY")
+        #conn.commit()
