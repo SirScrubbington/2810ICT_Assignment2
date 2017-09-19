@@ -39,6 +39,26 @@ if __name__ == '__main__':
         print(s)
         insert_row(conn,"'Southern cities'",s)
 
-    data_min_max_avg = select_from_database(conn,"SELECT MAX(AVGTEMP), MIN(AVGTEMP),AVG(AVGTEMP) FROM STATE WHERE STATE = 'Queensland' AND AVGTEMP NOT NULL ")
+    data_min_max_avg = select_from_database(conn,"SELECT AVGTEMP FROM STATE WHERE STATE = 'Queensland' AND AVGTEMP IS NOT NULL")
 
-    print(data_min_max_avg)
+    max=0
+    min=100
+    avg=0
+    count=0
+
+    for i in data_min_max_avg:
+        if(i[0])=='':
+            continue
+
+        if float(i[0]) > max:
+            max = float(i[0])
+
+        if float(i[0]) < min:
+            min = float(i[0])
+
+        avg += float(i[0])
+        count += 1
+
+    avg = avg / count
+
+    print("Maximum: ",max,"Minimum: ",min,"Average: ",avg)
