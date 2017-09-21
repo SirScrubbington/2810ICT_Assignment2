@@ -1,5 +1,6 @@
 import sqlite3
-from xlrd import open_workbook
+#from xlrd import open_workbook
+from openpyxl import *
 
 from sqlite3 import Error
 
@@ -11,44 +12,12 @@ def create_db(db_file):
     except Error as e:
         print(e)
 
-def create_table(conn,sql):
+def execute_sql(conn,sql):
     try:
         c = conn.cursor()
         c.execute(sql)
     except Error as e:
         print(e)
-
-def insert_row(conn,table,data):
-     try:
-         c = conn.cursor()
-
-         sql = "INSERT INTO "+table+" VALUES ("
-
-         for i in range(0,len(data)):
-             if(i > 0):
-                sql += ","
-             if(isinstance(data[i],str)):
-                 temp = data[i].replace("'","’")
-                 sql +="'"+temp+"'"
-             else:
-                 sql +=str(data[i])
-         sql+=");"
-         print(sql)
-         c.execute(sql)
-         conn.commit()
-     except Error as e:
-         print(sql)
-         print(e)
-
-def read_data(worksheet,table):
-    for s in worksheet.sheets():
-        for row in range(s.nrows):
-            col_value = []
-            for col in range(s.ncols):
-                value = (s.cell(row, col).value)
-                col_value.append(value)
-            insert_row(conn,table, col_value)
-
 
 if __name__ == '__main__':
 
@@ -84,21 +53,45 @@ if __name__ == '__main__':
 
     if conn is not None:
 
-        create_table(conn,create_table_gltbmc)
-        create_table(conn,create_table_gltbs)
-        create_table(conn,create_table_gltbc)
+        execute_sql(conn,create_table_gltbmc)
+        execute_sql(conn,create_table_gltbs)
+        execute_sql(conn,create_table_gltbc)
 
         print("data_gltbmc...")
-        data_gltbmc = open_workbook("xl/GlobalLandTemperaturesByMajorCity.xlsx")
-        print("done.")
-        print("data_gltbs...")
-        data_gltbs = open_workbook("xl/GlobalLandTemperaturesByState.xlsx")
-        print("done.")
-        print("data_gltbc...")
-        data_gltbc = open_workbook("xl/GlobalLandTemperaturesByCountry.xlsx")
+        data_gltbmc = load_workbook("xl/GlobalLandTemperaturesByMajorCity.xlsx")
+        data_gltbmc_ws = data_gltbmc.active
         print("done.")
 
-        read_data(data_gltbmc,"CITY")
-        read_data(data_gltbs, "STATE")
-        read_data(data_gltbc, "COUNTRY")
-        #conn.commit()
+        print("data_gltbs...")
+        data_gltbs = load_workbook("xl/GlobalLandTemperaturesByState.xlsx")
+        data_gltbs_ws = data_gltbs.active
+        print("done.")
+
+        print("data_gltbc...")
+        data_gltbc = load_workbook("xl/GlobalLandTemperaturesByCountry.xlsx")
+        data_gltbc_ws = data_gltbc.active
+        print("done.")
+
+        for i in data_gltbmc_ws:
+            sql = """INSERT INTO CITY (_DATE,AVGTEMP,UNCERT,CITY,COUNTRY,LATITUDE,LONGITUDE) VALUES ("{vDATE}","{vAVGTEMP}","{vUNCERT}","{vCITY}","{vCOUNTRY}","{vLATITUDE}","{vLONGITUDE}");"""
+            sql = sql.format(vDATE=i[0].value,vAVGTEMP=i[1].value,vUNCERT=i[2].value,vCITY=i[3].value,vCOUNTRY=i[4].value,vLATITUDE=i[5].value,vLONGITUDE=i[6].value)
+            #print(sql)
+            execute_sql(conn,sql)
+            pass
+
+        for i in data_gltbs_ws:
+            sql = """INSERT INTO STATE(_DATE,AVGTEMP,UNCERT,STATE,COUNTRY) VALUES ("{vDATE}","{vAVGTEMP}","{vUNCERT}","{vSTATE}","{vCOUNTRY}");"""
+            sql = sql.format(vDATE=i[0].value,vAVGTEMP=i[1].value,vUNCERT=i[2].value,vSTATE=i[3].value,vCOUNTRY=i[4].value)
+            #print(sql)
+            execute_sql(conn, sql)
+            pass
+
+        for i in data_gltbc_ws:
+            sql = """INSERT INTO COUNTRY(_DATE,AVGTEMP,UNCERT,COUNTRY) VALUES ("{vDATE}","{vAVGTEMP}","{vUNCERT}","{vCOUNTRY}");"""
+            sql = sql.format(vDATE=i[0].value,vAVGTEMP=i[1].value,vUNCERT=i[2].value,vCOUNTRY=i[3].value)
+            #print(sql)
+            execute_sql(conn, sql)
+            pass
+
+        conn.commit()
+        conn.close()

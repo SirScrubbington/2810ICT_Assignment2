@@ -21,9 +21,14 @@ if __name__ == '__main__':
 
         r = select_from_database(conn, sql)
 
-        x = []
-        y = []
-        z = []
+        sql2 = "SELECT COUNTRY,strftime('%Y',_DATE),AVG(AVGTEMP) FROM COUNTRY WHERE COUNTRY = 'Australia' GROUP BY COUNTRY,strftime('%Y',_DATE)"
+
+        r2 = select_from_database(conn,sql2)
+
+        for i in r:
+            r2.append(i)
+
+        r = r2
 
         d = {}
 
@@ -44,10 +49,11 @@ if __name__ == '__main__':
                     d[r[i][0]][1].append(r[i][2])
             pass
 
+        wb.save("World Temperature.xlsx")
+
         for k, v in d.items():
             plt.plot(v[0], v[1], label=k)
-        plt.title("Average Temperature in Major Australian States")
-        plt.plot(y, z)
+        plt.title("Average Temperature in Australian States Against National Average")
         plt.xlabel('Year')
         plt.ylabel('Average Temperature (Celsius)')
         plt.legend()

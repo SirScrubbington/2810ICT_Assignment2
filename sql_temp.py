@@ -1,6 +1,5 @@
 import sqlite3
 from sqlite3 import Error
-from xlrd import open_workbook
 
 from db_create import *
 
@@ -33,11 +32,13 @@ if __name__ == '__main__':
                           "LONGITUDE VARCHAR(8) NOT NULL," \
                           "PRIMARY KEY(_DATE,CITY));"
 
-    create_table(conn, create_table_south_hem)
+    execute_sql(conn, create_table_south_hem)
 
     for s in data_south_hem:
-        print(s)
-        insert_row(conn,"'Southern cities'",s)
+        #print(s)
+        #insert_row(conn,"'Southern cities'",s)
+        sql = """ INSERT INTO 'Southern cities'(_DATE,AVGTEMP,UNCERT,CITY,COUNTRY,LATITUDE,LONGITUDE) VALUES("{vDATE}","{vAVGTEMP}","{vUNCERT}","{vCITY}","{vCOUNTRY}","{vLATITUDE}","{vLONGITUDE}")"""
+        sql = sql.format(vDATE=s[0],vAVGTEMP=s[1],vUNCERT=s[2],vCITY=s[3],vCOUNTRY=s[4],vLATITUDE=s[5],vLONGITUDE=s[6]);
 
     data_min_max_avg = select_from_database(conn,"SELECT AVGTEMP FROM STATE WHERE STATE = 'Queensland' AND AVGTEMP IS NOT NULL")
 
@@ -47,16 +48,16 @@ if __name__ == '__main__':
     count=0
 
     for i in data_min_max_avg:
-        if(i[0])=='':
+        if(i[0])=='' or i[0]=='None':
             continue
 
-        if float(i[0]) > max:
+        if (i[0]) > max:
             max = float(i[0])
 
-        if float(i[0]) < min:
+        if (i[0]) < min:
             min = float(i[0])
 
-        avg += float(i[0])
+        avg += (i[0])
         count += 1
 
     avg = avg / count

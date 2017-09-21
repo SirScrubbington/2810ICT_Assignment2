@@ -9,54 +9,65 @@ if __name__ == '__main__':
     sh = wb.active
     sh.title="Temperature By City"
     conn = create_db("data.db")
-    query = "SELECT  CITY, strftime('%Y',_DATE), AVG(AVGTEMP) FROM CITY WHERE COUNTRY ='China' AND AVGTEMP NOT NULL GROUP BY strftime('%Y',_DATE),CITY ORDER BY strftime('%Y',_DATE) DESC"
+    query = "SELECT  CITY, strftime('%Y',_DATE), AVG(AVGTEMP) FROM CITY WHERE COUNTRY ='China' AND AVGTEMP NOT NULL AND _DATE > '0000-00-00' GROUP BY strftime('%Y',_DATE),CITY ORDER BY strftime('%Y',_DATE) DESC"
+
     r = select_from_database(conn,query)
 
-    print(r)
+    r = sorted(r, key=lambda x: x[1])
+    r = sorted(r, key=lambda x: x[0])
 
-    x = []
-    y = []
-    z = []
+    years = []
+    cities = []
+    temp = {}
 
-    d = {}
-
-    sh['B1']='Year'
-    sh['C1']='Average Temperature in China'
-    sh['A1']='City'
-
-    for i in range(0,len(r)):
-        if int(r[i][1]) > 0:
-            sh['A'+str(i+2)]=str(r[i][0])
-            sh['B'+str(i+2)]=r[i][1]
-            sh['C'+str(i+2)]=r[i][2]
-
-            if r[i][0] not in d.keys():
-                d[r[i][0]]=[[],[]]
-
-            if(r[i][2]!=0):
-                d[r[i][0]][0].append(r[i][1])
-                d[r[i][0]][1].append(r[i][2])
-        pass
+    for i in r:
+        if i[0] not in cities:
+            cities.append(i[0])
+        if i[1] not in years:
+            years.append(i[1])
+        temp[(i[0],i[1])]=i[2]
 
 
-    for k,v in d.items():
-        plt.plot(v[0],v[1],label=k)
-    plt.title("Average Temperature in Major Chinese Cities")
-    plt.plot(y,z)
-    plt.xlabel('Year')
-    plt.ylabel('Average Temperature (Celsius)')
-    plt.legend()
-    plt.show()
+    i=0
+    for col in sh.iter_cols(min_row=1,max_row=1,min_col=2,max_col=len(cities)):
+        for cell in col:
+            cell.value=cities[i]
+            i+=1
+
+    i=0
+    for row in sh.iter_rows(min_row=2,max_row=len(years),min_col=1,max_col=1):
+        for cell in row:
+            cell.value=years[i]
+            i+=1
+
+    i=0
+    j=0
+    for row in sh.iter_rows(min_row=2,max_row=len(years),min_col=2,max_col=len(cities)):
+        for cell in row:
+            try:
+                cell.value=temp[(cities[i],years[j])]
+            except KeyError:
+                pass
+            if cell.value==0:
+                cell.value=''
+            i+=1
+        j+=1
+        i=0
+
+    print(years)
+    print(cities)
+    print(temp)
 
     c = LineChart()
     c.title = "Average Temperature in Major Chinese Cities"
     c.style = 13
     c.y_axis.title = "Average Temperature (Celsius)"
     c.x_axis.title = "Year"
+    c.x_axis.auto=True
 
-    data = Reference(sh,min_col=1,min_row=1,max_col=3,max_row=1200)
-    c.add_data(data,titles_from_data=True)
+    r = Reference(sh,min_col=2,min_row=1,max_row=len(years),max_col=len(cities))
+    c.add_data(r,titles_from_data=True)
 
-    sh.add_chart(c,"E1")
+    sh.add_chart(c,"Q1")
 
     wb.save(wb_name)
